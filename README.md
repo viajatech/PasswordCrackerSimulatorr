@@ -7,3 +7,4 @@ La primera versión de prueba muestra el número de generaciones,el fitness,la m
 David Ruiz 
 ---------
 Recuerda darme créditos si usas mi script. lo puedes hacer también en mis redes sociales; @viajatech
+![](https://github.com/viajatech/PasswordCrackerSimulatorr/blob/main/Geneticos.png).

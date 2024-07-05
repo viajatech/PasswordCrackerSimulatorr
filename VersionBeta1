@@ -1,0 +1,127 @@
+#Simulador de fuerza bruta con algoritmos genéticos 
+#Primera Versión de prueba.
+#Gui Kivy 
+#Por David Ruiz
+#Puedes usar mi script siempre y cuando me des créditos en mis redes sociales @viajatech
+
+
+
+import random
+import string
+import time
+from kivy.app import App
+from kivy.uix.label import Label
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
+from kivy.uix.textinput import TextInput
+from kivy.clock import Clock
+
+class GeneticAlgorithm:
+    def __init__(self, target_password, population_size=100, mutation_rate=0.01):
+        self.target_password = target_password
+        self.population_size = population_size
+        self.mutation_rate = mutation_rate
+        self.charset = string.ascii_letters + string.digits + string.punctuation
+        self.population = self._initialize_population()
+        self.generation = 0
+
+    def _initialize_population(self):
+        return [''.join(random.choices(self.charset, k=len(self.target_password))) for _ in range(self.population_size)]
+
+    def _fitness(self, individual):
+        return sum(c1 == c2 for c1, c2 in zip(individual, self.target_password))
+
+    def _select_parents(self):
+        weights = [self._fitness(individual) for individual in self.population]
+        total_weight = sum(weights)
+        selection_probs = [weight / total_weight for weight in weights]
+        parents = random.choices(self.population, weights=selection_probs, k=self.population_size)
+        return parents
+
+    def _crossover(self, parent1, parent2):
+        crossover_point = random.randint(0, len(self.target_password) - 1)
+        child = parent1[:crossover_point] + parent2[crossover_point:]
+        return child
+
+    def _mutate(self, individual):
+        individual = list(individual)
+        for i in range(len(individual)):
+            if random.random() < self.mutation_rate:
+                individual[i] = random.choice(self.charset)
+        return ''.join(individual)
+
+    def _create_new_generation(self, parents):
+        new_population = []
+        for _ in range(self.population_size // 2):
+            parent1, parent2 = random.sample(parents, 2)
+            child1 = self._mutate(self._crossover(parent1, parent2))
+            child2 = self._mutate(self._crossover(parent2, parent1))
+            new_population.extend([child1, child2])
+        return new_population
+
+    def run(self):
+        while True:
+            self.generation += 1
+            self.population = self._create_new_generation(self._select_parents())
+            best_individual = max(self.population, key=self._fitness)
+            yield self.generation, best_individual, self._fitness(best_individual)
+            if best_individual == self.target_password:
+                break
+
+class PasswordCrackerByViajaTechApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.genetic_algorithm = None
+        self.label = Label(text="Enter the password to crack:")
+        self.layout = BoxLayout(orientation='vertical')
+        self.text_input = TextInput(multiline=False)
+        self.layout.add_widget(self.label)
+        self.layout.add_widget(self.text_input)
+        self.button = Button(text="Start Cracking", on_press=self.start_cracking)
+        self.layout.add_widget(self.button)
+        self.start_time = None
+        
+    def start_cracking(self, instance):
+        target_password = self.text_input.text
+        if target_password:
+            self.genetic_algorithm = GeneticAlgorithm(target_password=target_password)
+            self.button.disabled = True
+            self.start_time = time.time()
+            Clock.schedule_interval(self.update, 0.1)
+
+    def update(self, dt):
+        try:
+            generation, best_individual, fitness = next(self.genetic_algorithm.run())
+            self.label.text = f"Generation: {generation}\nBest Individual: {best_individual}\nFitness: {fitness}"
+            if best_individual == self.genetic_algorithm.target_password:
+                end_time = time.time()
+                elapsed_time = end_time - self.start_time
+                elapsed_time_str = self.format_time(elapsed_time)
+                self.label.text += f"\nPassword Found!\nTime Taken: {elapsed_time_str}"
+                Clock.unschedule(self.update)
+        except StopIteration:
+            pass
+
+    def format_time(self, seconds):
+        intervals = (
+            ('years', 31536000),  # 60 * 60 * 24 * 365
+            ('months', 2592000),  # 60 * 60 * 24 * 30
+            ('days', 86400),      # 60 * 60 * 24
+            ('hours', 3600),      # 60 * 60
+            ('minutes', 60),
+            ('seconds', 1),
+        )
+
+        result = []
+        for name, count in intervals:
+            value = seconds // count
+            if value:
+                seconds -= value * count
+                result.append(f"{int(value)} {name}")
+        return ', '.join(result)
+
+    def build(self):
+        return self.layout
+
+if __name__ == '__main__':
+    PasswordCrackerByViajaTechApp().run()

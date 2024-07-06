@@ -2,7 +2,7 @@ Simulador de Fuerza Bruta, utilizando Algoritmos Genéticos.
 ---------
 GUI Kivy
 ---------
-La primera versión de prueba muestra el número de generaciones,el fitness,la muestra de contraseñas en tiempo real, esta es una versión BETA
+La primera versión de prueba muestra el número de generaciones,el fitness,la muestra de contraseñas en tiempo real, esta es una versión BETA (Aún no se encuentra Terminada).
 ---------
 David Ruiz 
 ---------
